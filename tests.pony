@@ -52,9 +52,9 @@ class iso _TestSeq is UnitTest
   fun apply(h: TestHelper)? =>
     var ber = BER([0x30; 0x0b; 0x02; 0x01; 0x00; 0x04; 0x06; 0x70; 0x75; 0x62; 0x6C; 0x69; 0x63].values())
     match ber.read_value()?
-    | let v: BeginSeq => h.assert_is[BeginSeq](v, BeginSeq)
+    | let v: BeginStruct => true
     else
-      h.fail("Expected BeginSeq")
+      h.fail("Expected BeginStruct")
     end
     match ber.read_value()?
     | let i: I64 => h.assert_eq[I64](i, 0)

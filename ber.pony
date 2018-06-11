@@ -1,5 +1,9 @@
-primitive BeginSeq
+class BeginStruct
+  let tagclass: U8
+  let tagnumber: U64
+  new create(c: U8 = 0, n: U64) => tagclass = c; tagnumber = n
 primitive EndStruct
+
 
 class BER
   var input: Iterator[U8]
@@ -31,7 +35,7 @@ class BER
       a
     end
 
-  fun ref read_value(): (String | Signed | BeginSeq | EndStruct)? =>
+  fun ref read_value(): (String | Signed | BeginStruct | EndStruct)? =>
     if (stack.size() > 0) and (count == stack(stack.size()-1)?) then
       stack.pop()?
       return EndStruct
@@ -69,7 +73,7 @@ class BER
     | 16 =>
       var l = read_length()?
       stack.push(count + l)
-      BeginSeq
+      BeginStruct(0,tag_number)
     else
       error
     end
