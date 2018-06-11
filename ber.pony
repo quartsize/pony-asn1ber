@@ -1,6 +1,18 @@
-primitive Ber
-  fun read_length(octets: Iterator[U8]): USize? =>
-    let first_octet = octets.next()?
+class BER
+  var input: Iterator[U8]
+  var count: USize = 0
+  var stack: Array[USize] = Array[USize]()
+
+  new create(input': Iterator[U8]) =>
+    input = input'
+
+  fun ref next_octet(): U8? =>
+    let o = input.next()?
+    count = count + 1
+    o
+
+  fun ref read_length(): USize? =>
+    let first_octet = next_octet()?
 
     if first_octet < 0x80 then
       first_octet.usize()
@@ -11,28 +23,28 @@ primitive Ber
       var a = USize(0)
       while c > 0 do
         c = c - 1
-        a = (a << 8) + octets.next()?.usize()
+        a = (a << 8) + next_octet()?.usize()
       end
       a
     end
 
-  fun read_value(octets: Iterator[U8]): (String | Signed)? =>
-    match octets.next()?
+  fun ref read_value(): (String | Signed)? =>
+    match next_octet()?
     | 0x04 =>
-      var c = read_length(octets)?
+      var c = read_length()?
       var s = recover String(c) end
       while c > 0 do
         c = c - 1
-        s.push(octets.next()?)
+        s.push(next_octet()?)
       end
       s
     | 0x02 =>
-      var c = read_length(octets)? - 1
-      let o = octets.next()?
+      var c = read_length()? - 1
+      let o = next_octet()?
       var a = (o and 0x7f).i64() - (o and 0x80).i64()
       while c > 0 do
         c = c - 1
-        a = (a << 8) + octets.next()?.i64()
+        a = (a << 8) + next_octet()?.i64()
       end
       a
     else
