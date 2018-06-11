@@ -37,8 +37,19 @@ class BER
       return EndStruct
     end
 
-    match next_octet()?
-    | 0x04 =>
+    let first_octet = next_octet()?
+    var tag_number: U64 = (first_octet and 0x1F).u64()
+    if tag_number == 0x1F then
+      var o = next_octet()?
+      tag_number = (o and 0x7f).u64()
+      while (o and 0x80) == 0x80 do
+        o = next_octet()?
+        tag_number = (tag_number << 8) + (o and 0x7f).u64()
+      end
+    end
+
+    match tag_number
+    | 4 =>
       var c = read_length()?
       var s = recover String(c) end
       while c > 0 do
@@ -46,7 +57,7 @@ class BER
         s.push(next_octet()?)
       end
       s
-    | 0x02 =>
+    | 2 =>
       var c = read_length()? - 1
       let o = next_octet()?
       var a = (o and 0x7f).i64() - (o and 0x80).i64()
@@ -55,7 +66,7 @@ class BER
         a = (a << 8) + next_octet()?.i64()
       end
       a
-    | 0x30 =>
+    | 16 =>
       var l = read_length()?
       stack.push(count + l)
       BeginSeq
