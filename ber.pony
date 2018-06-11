@@ -13,10 +13,12 @@ class BER
   new create(input': Iterator[U8]) =>
     input = input'
 
+
   fun ref next_octet(): U8? =>
     let o = input.next()?
     count = count + 1
     o
+
 
   fun ref read_length(): USize? =>
     let first_octet = next_octet()?
@@ -35,14 +37,12 @@ class BER
       a
     end
 
-  fun ref read_value(): (String | Signed | BeginStruct | EndStruct)? =>
-    if (stack.size() > 0) and (count == stack(stack.size()-1)?) then
-      stack.pop()?
-      return EndStruct
-    end
 
-    let first_octet = next_octet()?
-    var tag_number: U64 = (first_octet and 0x1F).u64()
+  fun ref read_id(): (Bool, U8, U64)? =>
+    let first_id_octet = next_octet()?
+    var constructed: Bool = (first_id_octet and 0x20) == 0x20
+    var tag_class: U8 = (first_id_octet and 0xc) >> 6
+    var tag_number: U64 = (first_id_octet and 0x1F).u64()
     if tag_number == 0x1F then
       var o = next_octet()?
       tag_number = (o and 0x7f).u64()
@@ -51,30 +51,41 @@ class BER
         tag_number = (tag_number << 8) + (o and 0x7f).u64()
       end
     end
+    (constructed, tag_class, tag_number)
 
-    match tag_number
-    | 4 =>
-      var c = read_length()?
-      var s = recover String(c) end
-      while c > 0 do
-        c = c - 1
-        s.push(next_octet()?)
-      end
-      s
-    | 2 =>
-      var c = read_length()? - 1
-      let o = next_octet()?
-      var a = (o and 0x7f).i64() - (o and 0x80).i64()
-      while c > 0 do
-        c = c - 1
-        a = (a << 8) + next_octet()?.i64()
-      end
-      a
-    | 16 =>
-      var l = read_length()?
-      stack.push(count + l)
-      BeginStruct(0,tag_number)
+
+  fun ref read_value(): (String | Signed | BeginStruct | EndStruct)? =>
+    if (stack.size() > 0) and (count == stack(stack.size()-1)?) then
+      stack.pop()?
+      return EndStruct
+    end
+
+    (let constructed, let tag_class, let tag_number) = read_id()?
+    var c = read_length()?
+
+    if constructed then
+      stack.push(count + c)
+      BeginStruct(tag_class,tag_number)
     else
-      error
+      match tag_number
+      | 4 =>
+        var s = recover String(c) end
+        while c > 0 do
+          c = c - 1
+          s.push(next_octet()?)
+        end
+        s
+      | 2 =>
+        let o = next_octet()?
+        c = c - 1
+        var a = (o and 0x7f).i64() - (o and 0x80).i64()
+        while c > 0 do
+          c = c - 1
+          a = (a << 8) + next_octet()?.i64()
+        end
+        a
+      else
+        error
+      end
     end
 
