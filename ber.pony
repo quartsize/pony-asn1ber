@@ -1,3 +1,6 @@
+primitive BeginSeq
+primitive EndStruct
+
 class BER
   var input: Iterator[U8]
   var count: USize = 0
@@ -28,7 +31,12 @@ class BER
       a
     end
 
-  fun ref read_value(): (String | Signed)? =>
+  fun ref read_value(): (String | Signed | BeginSeq | EndStruct)? =>
+    if (stack.size() > 0) and (count == stack(stack.size()-1)?) then
+      stack.pop()?
+      return EndStruct
+    end
+
     match next_octet()?
     | 0x04 =>
       var c = read_length()?
@@ -47,6 +55,10 @@ class BER
         a = (a << 8) + next_octet()?.i64()
       end
       a
+    | 0x30 =>
+      var l = read_length()?
+      stack.push(count + l)
+      BeginSeq
     else
       error
     end
