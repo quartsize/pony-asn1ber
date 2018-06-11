@@ -38,18 +38,23 @@ class BER
     end
 
 
+  fun ref read_vlq(): U64? =>
+    var o = next_octet()?
+    var u = (o and 0x7f).u64()
+    while (o and 0x80) == 0x80 do
+      o = next_octet()?
+      u = (u << 7) + (o and 0x7f).u64()
+    end
+    u
+
+
   fun ref read_id(): (Bool, U8, U64)? =>
     let first_id_octet = next_octet()?
     var constructed: Bool = (first_id_octet and 0x20) == 0x20
     var tag_class: U8 = (first_id_octet and 0xc) >> 6
     var tag_number: U64 = (first_id_octet and 0x1F).u64()
     if tag_number == 0x1F then
-      var o = next_octet()?
-      tag_number = (o and 0x7f).u64()
-      while (o and 0x80) == 0x80 do
-        o = next_octet()?
-        tag_number = (tag_number << 8) + (o and 0x7f).u64()
-      end
+      tag_number = read_vlq()?
     end
     (constructed, tag_class, tag_number)
 
