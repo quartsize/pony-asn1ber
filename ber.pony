@@ -39,12 +39,12 @@ class BER
 
 
   fun ref read_vlq(): U64? =>
-    var o = next_octet()?
-    var u = (o and 0x7f).u64()
-    while (o and 0x80) == 0x80 do
+    var o: U8
+    var u = U64(0)
+    repeat
       o = next_octet()?
       u = (u << 7) + (o and 0x7f).u64()
-    end
+    until (o and 0x80) == 0 end
     u
 
 
