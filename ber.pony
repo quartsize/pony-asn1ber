@@ -1,3 +1,5 @@
+use "buffered"
+
 class BeginStruct
   let tagclass: U8
   let tagnumber: U64
@@ -5,19 +7,19 @@ class BeginStruct
 primitive EndStruct
 
 
-class BER
-  var input: Iterator[U8]
+class BerReader
+  embed _rd: Reader ref = Reader
   var count: USize = 0
   var stack: Array[USize] = Array[USize]()
 
-  new create(input': Iterator[U8]) =>
-    input = input'
-
-
   fun ref next_octet(): U8? =>
-    let o = input.next()?
+    let o = _rd.u8()?
     count = count + 1
     o
+
+
+  fun ref append(data: (String val | Array[U8 val] val)): None val =>
+    _rd.append(data)
 
 
   fun ref read_length(): USize? =>
