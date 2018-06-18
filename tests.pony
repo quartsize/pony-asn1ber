@@ -35,11 +35,11 @@ class iso _TestStrings is UnitTest
     let rd: BerReader ref = BerReader
     rd.append(recover [0x04; 0x06; 0x70; 0x75; 0x62; 0x6C; 0x69; 0x63] end)
     match rd.read_value()?
-    | let s: String => h.assert_eq[String](s, "public")
+    | let s: Asn1OctetString => h.assert_eq[String](s.string(), "public")
     end
     rd.append(recover [0x04; 0x07; 0x70; 0x72; 0x69; 0x76; 0x61; 0x74; 0x65] end)
     match rd.read_value()?
-    | let s: String => h.assert_eq[String](s, "private")
+    | let s: Asn1OctetString => h.assert_eq[String](s.string(), "private")
     end
 
 class iso _TestAsn1Integers is UnitTest
@@ -85,7 +85,7 @@ class iso _TestSeq is UnitTest
       h.fail("Expected INTEGER: 0")
     end
     match rd.read_value()?
-    | let s: String => h.assert_eq[String](s, "public")
+    | let s: Asn1OctetString => h.assert_eq[String](s.string(), "public")
     else
       h.fail("Expected OCTET STRING: public")
     end
