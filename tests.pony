@@ -58,15 +58,15 @@ class iso _TestIntegers is UnitTest
     let rd: BerReader ref = BerReader
     rd.append(recover [0x02; 0x01; 0x00] end)
     match rd.read_value()?
-    | let i: I64 => h.assert_eq[I64](i, 0)
+    | let i: Asn1Integer => h.assert_eq[I64](i.i64(), 0)
     end
     rd.append(recover [0x02; 0x02; 0x00; 0x80] end)
     match rd.read_value()?
-    | let i: I64 => h.assert_eq[I64](i, 128)
+    | let i: Asn1Integer => h.assert_eq[I64](i.i64(), 128)
     end
     rd.append(recover [0x02; 0x02; 0xFF; 0x7F] end)
     match rd.read_value()?
-    | let i: I64 => h.assert_eq[I64](i, -129)
+    | let i: Asn1Integer => h.assert_eq[I64](i.i64(), -129)
     end
 
 class iso _TestSeq is UnitTest
@@ -80,7 +80,7 @@ class iso _TestSeq is UnitTest
       h.fail("Expected BeginStruct")
     end
     match rd.read_value()?
-    | let i: I64 => h.assert_eq[I64](i, 0)
+    | let i: Asn1Integer => h.assert_eq[I64](i.i64(), 0)
     else
       h.fail("Expected INTEGER: 0")
     end

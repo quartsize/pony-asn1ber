@@ -17,6 +17,10 @@ class BerReader
     count = count + 1
     o
 
+  fun ref block(len: USize val): Array[U8 val] iso^ ? =>
+    let r = _rd.block(len)?
+    count = count + len
+    r
 
   fun ref append(data: (String val | Array[U8 val] val)): None val =>
     _rd.append(data)
@@ -61,7 +65,7 @@ class BerReader
     (constructed, tag_class, tag_number)
 
 
-  fun ref read_value(): (String | Signed | BeginStruct | EndStruct)? =>
+  fun ref read_value(): (String | Asn1Integer | BeginStruct | EndStruct)? =>
     if (stack.size() > 0) and (count == stack(stack.size()-1)?) then
       stack.pop()?
       return EndStruct
@@ -83,14 +87,7 @@ class BerReader
         end
         s
       | 2 =>
-        let o = next_octet()?
-        c = c - 1
-        var a = (o and 0x7f).i64() - (o and 0x80).i64()
-        while c > 0 do
-          c = c - 1
-          a = (a << 8) + next_octet()?.i64()
-        end
-        a
+        Asn1Integer.from_ber(block(c)?)
       else
         error
       end
