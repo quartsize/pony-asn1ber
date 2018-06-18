@@ -11,6 +11,7 @@ actor Main is TestList
     test(_TestLengthShort)
     test(_TestLengthLong)
     test(_TestStrings)
+    test(_TestAsn1Integers)
     test(_TestIntegers)
     test(_TestSeq)
 
@@ -40,6 +41,16 @@ class iso _TestStrings is UnitTest
     match rd.read_value()?
     | let s: String => h.assert_eq[String](s, "private")
     end
+
+class iso _TestAsn1Integers is UnitTest
+  fun name(): String => "Asn1Integers"
+  fun apply(h: TestHelper) =>
+    let zero = Asn1Integer.from_ber(recover [0x00] end)
+    let p128 = Asn1Integer.from_ber(recover [0x00; 0x80] end)
+    let n129 = Asn1Integer.from_ber(recover [0xFF; 0x7F] end)
+    h.assert_eq[I64](zero.i64(), 0)
+    h.assert_eq[I64](p128.i64(), 128)
+    h.assert_eq[I64](n129.i64(), -129)
 
 class iso _TestIntegers is UnitTest
   fun name(): String => "integers"
