@@ -14,6 +14,7 @@ actor Main is TestList
     test(_TestAsn1Integers)
     test(_TestIntegers)
     test(_TestSeq)
+    test(_TestVLQ)
 
 class iso _TestLengthShort is UnitTest
   fun name(): String => "short form length"
@@ -94,3 +95,16 @@ class iso _TestSeq is UnitTest
     else
       h.fail("Expected EndStruct")
     end
+
+class iso _TestVLQ is UnitTest
+  fun name(): String => "vlq"
+  fun apply(h: TestHelper)? =>
+    // from the exercism tests:
+    let v = Vlq([0xc0; 0x00; 0xc8; 0xe8; 0x56; 0xff; 0xff; 0xff; 0x7f; 0x00; 0xff; 0x7f; 0x81; 0x80; 0x00].values())
+    h.assert_eq[U64](0x2000, v.next()?)
+    h.assert_eq[U64](0x123456, v.next()?)
+    h.assert_eq[U64](0x0fffffff, v.next()?)
+    h.assert_eq[U64](0x00, v.next()?)
+    h.assert_eq[U64](0x3fff, v.next()?)
+    h.assert_eq[U64](0x4000, v.next()?)
+  
