@@ -15,6 +15,7 @@ actor Main is TestList
     test(_TestIntegers)
     test(_TestSeq)
     test(_TestVLQ)
+    test(_TestOID)
 
 class iso _TestLengthShort is UnitTest
   fun name(): String => "short form length"
@@ -108,3 +109,11 @@ class iso _TestVLQ is UnitTest
     h.assert_eq[U64](0x3fff, v.next()?)
     h.assert_eq[U64](0x4000, v.next()?)
   
+class iso _TestOID is UnitTest
+  fun name(): String => "oid"
+  fun apply(h: TestHelper) =>
+    // from the exercism tests:
+    let oid = Asn1ObjectIdentifier.from_ber(
+      recover [0x2b; 0x06; 0x01; 0x04; 0x01; 0x82; 0x3e
+               0x01; 0x01; 0x0c; 0x01; 0x02; 0x00] end)
+    h.assert_eq[String]("1.3.6.1.4.1.318.1.1.12.1.2.0", oid.string())
