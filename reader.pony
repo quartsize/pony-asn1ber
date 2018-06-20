@@ -65,7 +65,7 @@ class BerReader
     (constructed, tag_class, tag_number)
 
 
-  fun ref read_value(): (Asn1OctetString | Asn1Integer | BeginStruct | EndStruct)? =>
+  fun ref read_value(): (Asn1ObjectIdentifier | Asn1OctetString | Asn1Integer | BeginStruct | EndStruct)? =>
     if (stack.size() > 0) and (count == stack(stack.size()-1)?) then
       stack.pop()?
       return EndStruct
@@ -79,10 +79,9 @@ class BerReader
       BeginStruct(tag_class,tag_number)
     else
       match tag_number
-      | 4 =>
-        Asn1OctetString.from_ber(block(c)?)
-      | 2 =>
-        Asn1Integer.from_ber(block(c)?)
+      | 2 => Asn1Integer.from_ber(block(c)?)
+      | 4 => Asn1OctetString.from_ber(block(c)?)
+      | 6 => Asn1ObjectIdentifier.from_ber(block(c)?)
       else
         error
       end

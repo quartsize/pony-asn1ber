@@ -16,6 +16,7 @@ actor Main is TestList
     test(_TestSeq)
     test(_TestVLQ)
     test(_TestOID)
+    test(_TestSNMPGetResponse)
 
 class iso _TestLengthShort is UnitTest
   fun name(): String => "short form length"
@@ -117,3 +118,91 @@ class iso _TestOID is UnitTest
       recover [0x2b; 0x06; 0x01; 0x04; 0x01; 0x82; 0x3e
                0x01; 0x01; 0x0c; 0x01; 0x02; 0x00] end)
     h.assert_eq[String]("1.3.6.1.4.1.318.1.1.12.1.2.0", oid.string())
+
+class iso _TestSNMPGetResponse is UnitTest
+  fun name(): String => "snmp get-response"
+  fun apply(h: TestHelper)? =>
+    let data: Array[U8] val =
+      [0x30; 0x30; 0x02; 0x01; 0x00; 0x04; 0x06; 0x70; 0x75; 0x62
+       0x6c; 0x69; 0x63; 0xa2; 0x23; 0x02; 0x04; 0x28; 0x90; 0x76
+       0x29; 0x02; 0x01; 0x00; 0x02; 0x01; 0x00; 0x30; 0x15; 0x30
+       0x13; 0x06; 0x0d; 0x2b; 0x06; 0x01; 0x04; 0x01; 0x82; 0x3e
+       0x01; 0x01; 0x0c; 0x01; 0x02; 0x00; 0x04; 0x02; 0x30; 0x32]
+    let rd: BerReader ref = BerReader
+    rd.append(data)
+
+    match rd.read_value()?
+    | let v: BeginStruct => true
+    else
+      h.fail("Expected BeginStruct")
+    end
+    match rd.read_value()?
+    | let i: Asn1Integer => h.assert_eq[I64](i.i64(), 0)
+    else
+      h.fail("Expected INTEGER: 0")
+    end
+    match rd.read_value()?
+    | let s: Asn1OctetString => h.assert_eq[String](s.string(), "public")
+    else
+      h.fail("Expected OCTET STRING: public")
+    end
+    match rd.read_value()?
+    | let v: BeginStruct => true
+    else
+      h.fail("Expected BeginStruct")
+    end
+    match rd.read_value()?
+    | let i: Asn1Integer => h.assert_eq[I64](i.i64(), 680556073)
+    else
+      h.fail("Expected INTEGER")
+    end
+    match rd.read_value()?
+    | let i: Asn1Integer => h.assert_eq[I64](i.i64(), 0)
+    else
+      h.fail("Expected INTEGER")
+    end
+    match rd.read_value()?
+    | let i: Asn1Integer => h.assert_eq[I64](i.i64(), 0)
+    else
+      h.fail("Expected INTEGER")
+    end
+    match rd.read_value()?
+    | let v: BeginStruct => true
+    else
+      h.fail("Expected BeginStruct")
+    end
+    match rd.read_value()?
+    | let v: BeginStruct => true
+    else
+      h.fail("Expected BeginStruct")
+    end
+    match rd.read_value()?
+    | let s: Asn1ObjectIdentifier => h.assert_eq[String](s.string(), "1.3.6.1.4.1.318.1.1.12.1.2.0")
+    else
+      h.fail("Expected OBJECT IDENTIFIER")
+    end
+    match rd.read_value()?
+    | let s: Asn1OctetString => h.assert_eq[String](s.string(), "02")
+    else
+      h.fail("Expected OCTET STRING")
+    end
+    match rd.read_value()?
+    | let v: EndStruct => h.assert_is[EndStruct](v, EndStruct)
+    else
+      h.fail("Expected EndStruct")
+    end
+    match rd.read_value()?
+    | let v: EndStruct => h.assert_is[EndStruct](v, EndStruct)
+    else
+      h.fail("Expected EndStruct")
+    end
+    match rd.read_value()?
+    | let v: EndStruct => h.assert_is[EndStruct](v, EndStruct)
+    else
+      h.fail("Expected EndStruct")
+    end
+    match rd.read_value()?
+    | let v: EndStruct => h.assert_is[EndStruct](v, EndStruct)
+    else
+      h.fail("Expected EndStruct")
+    end
